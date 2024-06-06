@@ -1,13 +1,38 @@
-    import React from 'react';
-    import { Link } from 'react-router-dom';
-    import './Navbar.css';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import './Navbar.css';
+import { LoginModal } from '../LoginModal/LoginModal';
+import { Ecomm_Logo } from '../../assets/Image';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeUser } from '../../slices/userSlice';
+import supabase from '../../supabase';
 
-    export const Navbar = () => {
-        return (
+export const Navbar = () => {
+
+    const [loginModalShow, setLoginModalShow] = useState(false);
+
+    const userData = useSelector((state) => state.userData.user);
+    const dispatch = useDispatch()
+
+    useEffect(() => {
+        if (userData) {
+            setLoginModalShow(false)
+        }
+    }, [userData]);
+
+    const handleLogout = async () => {
+        const { error } = await supabase.auth.signOut()
+        if (!error) {
+            dispatch(removeUser());
+        }
+    }
+
+    return (
+        <>
             <nav className="navbar navbar-expand-lg bg-primary">
                 <div className="container">
                     <Link className="navbar-brand" to="/">
-                        <img src="https://logos-world.net/wp-content/uploads/2020/11/Flipkart-Emblem.png"
+                        <img src={Ecomm_Logo}
                             style={{ width: "90px" }}
                             alt="" />
                     </Link>
@@ -44,10 +69,17 @@
 
                             </li>
                             <li className="nav-item">
-                                <Link to={'Login'} type="button" className="btn btn-light rounded-0 px-4">
-                                    Login
-                                </Link>
-
+                                {
+                                    userData ?
+                                        (
+                                            <Link onClick={handleLogout} className='text-white mb-0'>@{userData.email.slice(0, 10)}</Link>
+                                        ) :
+                                        (
+                                            <Link onClick={() => { setLoginModalShow(true) }} type="button" className="btn btn-light rounded-0 px-4">
+                                                Login
+                                            </Link>
+                                        )
+                                }
                             </li>
                             <li className="nav-item">
                                 <Link className="nav-link text-white fw-semibold" to={''}>
@@ -67,6 +99,8 @@
                         </ul>
                     </div>
                 </div>
-            </nav>
-        )
-    }
+            </nav >
+            <LoginModal show={loginModalShow} onHide={() => { setLoginModalShow(false) }} />
+        </>
+    )
+}
